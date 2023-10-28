@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  node-app:
+    build: 
+      context: .
+      args:
+        NODE_ENV: development
+    volumes:
+    #this is bindmount -- ./ signifies the absolurte path "/home/princewill/Docker/learning/Node/dockerized/node". thuswe have /home/princewill/Docker/learning/Node/dockerized/node:/app:ro as usual
+      - ./:/app:ro
+      #anonymous volume
+      - /app/node_modules
+          
+
+      #this wil overide the CMD ["node","server.js"] in the dockerfile
+    command: npm run dev
+
+  #mongo DB config
+
+  mongo:
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: princewillopah
+      MONGO_INITDB_ROOT_PASSWORD: PRINCEWILL1980 
+
+    

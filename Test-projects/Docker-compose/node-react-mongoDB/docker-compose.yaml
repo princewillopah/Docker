@@ -1,0 +1,55 @@
+version: "3.8"
+services:
+  # mongodb:
+  #   image: "mongo"
+  #   volumes:
+  #     - data:/data/db
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: max
+  #     MONGO_INITDB_ROOT_PASSWORD: secret
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    ports:
+      - 27017:27017
+    env_file:
+      - ./env/mongo.env
+
+    # volumes:
+    #   - mongo-data:/data/db
+  mongo-express:
+    image: mongo-express
+    container_name: max-mern-mongo-express
+    restart: always # fixes MongoNetworkError when mongodb is not ready when mongo-express starts
+    ports:
+      - 8081:8081
+    env_file:
+      - ./env/mongo-express.env
+    # networks:
+    #   - mern-network
+  backend:
+    # build: 
+    #   context: ./backend
+    #   dockerfile: dockerfile
+    build: ./backend
+    container_name: max-mern-backend
+    env_file:
+      - ./env/backend.env 
+    ports: 
+      - 80:80
+    depends_on:
+      - mongodb
+
+  frontend:
+    build: ./frontend
+    container_name: max-mern-frontend
+    ports: 
+      - 3000:3000
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+
+# volumes:
+#   data:

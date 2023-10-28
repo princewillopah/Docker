@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  node-app:
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - mongo
+  
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: princewillopah
+      MONGO_INITDB_ROOT_PASSWORD: PRINCEWILL1980
+    volumes:
+      - node-app-mongo-db:/data/db
+
+  redis:
+    image: redis
+
+volumes:
+  node-app-mongo-db:

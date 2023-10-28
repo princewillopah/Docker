@@ -1,0 +1,6 @@
+=> This app REQUIRES both mongodb and nodejs app both containerized and have them in the same network for containers' communication
+=> create a docker network: docker network create my-network
+=> run a mongodb image from docker repo and add to network: docker run -d --rm --name mongo-container --network my-network mongo
+=> build node-app image: docker build -t node-app-image .
+=> run the contaner based no the nde-app-image image in network: docker run -d --rm -p 80:3000 --name node-app-container --network my-network node-app-image:latest
+=> check if both container are running, then test this on postman or browser. if any error, remove the -d flag while running the node-app-container. also check if you use the mongo-container in the connecting string of the mongo container while creating the image

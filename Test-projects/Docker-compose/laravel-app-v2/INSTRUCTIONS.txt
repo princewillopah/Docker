@@ -1,0 +1,95 @@
+
+=======================================================================
+UTILITY CONTAINERS
+=======================================================================
+• Utility containers are Docker containers that are created and used for a specific purpose, such as performing a task or providing a service, and are then removed. These containers are often small and lightweight, and can be run alongside other containers in a Docker network. 
+• Utility containers can be used to perform tasks such as backing up data, monitoring the system, and managing network traffic. They can also be used to provide services such as DNS resolution, load balancing, and caching. 
+• One of the benefits of using utility containers is that they can be easily replaced or updated without affecting the other containers in the network. Additionally, because they are often small and specialized, they can be more secure and easier to manage than larger, more complex containers that perform multiple functions. 
+• they only run and perform that task to completion and then stop, unlike normal containers that are meant to run continuously
+• b
+
+
+=======================================================================
+
+=======================================================================
+
+=======================================================================
+
+=======================================================================
+
+=======================================================================
+
+=======================================================================
+
+=======================================================================
+
+=======================================================================
+
+=======================================================================
+
+=======================================================================
+
+
+
+
+=======================================================================
+ CREAT THE COMPOSER UTILITY CONTAINER 
+========================================================================
++   We need the composer to firstly install the laravel project, and then we will use it to install every other package reuired by the laravel project,as composer is the package manager for php/Laravel
++   The utility container is only going to run when neede and stop, as discussed above
++   From Laravel Docs, To install laravel,
+    +   Use the command below After you have installed PHP and Composer on your local system
+        ++ composer create-project laravel/laravel example-app
+    +   Or, you may create new Laravel projects by globally installing the Laravel installer via Composer as shwon below:
+        ++ composer global require laravel/installer
+        ++ laravel new example-app
+    +   After the project has been created, start Laravel's local development server using the Laravel's Artisan CLI serve command:
+        ++ cd example-app
+        ++ php artisan serve
+    + Once you have started the Artisan development server, your application will be accessible in your web browser at http://localhost:8000
+
++ Create a dockerfile "composer.dockerfile". The composer.dockerfile should containe the following 
+    + The base image:
+        ++  FROM composer:latest
+    +   The working directory is where our code will be for composer to work with
+        ++ WORKDIR /var/www/html
+    +   The executable. we could do this on the docker-compose file also, 
+    +   pass the --ignore-platform-reqs and / or --no-scripts flags to install or update
+        ++ ENTRYPOINT ["composer", "--ignore-platform-res"]
+
++ Add the dockerfile in the docker compose 
+    
+    composer-utils:
+        build:       #the composer container utility will help us set the laravel project first, the we may use it subsequently to install other laravel packages whenever we need it
+            context: ./dockerfiles
+            dockerfile: composer.dockerfile  
+        volumes:
+            - ./src:/var/www/html:delegated
++ we need to run only the composer utility container to install the laravel project on the workdir specify by the composer.dockerfile, before continue
++ to run only one service, we use
+    ++ docker-compose run --build --rm <container-service-name>
++ to run only one utility container, 
+    ++  docker-compose run --build --rm <container-service-name> <command>
+to run the composer-utils here
+    + docker compose run --build --rm <composer-utils> <composer create-project laravel/laravel example-app>
+    ++ docker compose run --build --rm composer-utils create-project laravel/laravel .
+    + we didnt include the composer in the <composer create-project laravel/laravel example-app> because we already have it in the ENTRYPOINT ['composer'] of the composer.dockerfile
+    + we also replaced the example-appwith a "."  in <composer create-project laravel/laravel example-app> because "example-app" is a folder where we wannt to install the laravel project. in this context "." indicates that the folders should be in install in the current working directory var/www/html in the container, which will now be reflacted in the src folder of our local host due to the bind mount "./src:/var/www/html:delegated"
+
+    
+=======================================================================
+Configure the database section of the .env file in the newly created laravel project to be able to connect to MyQSL. 
+=======================================================================
+
+        DB_CONNECTION=mysql
+        DB_HOST=mysql   # we changed the value from 127.0.0.1 to the mysql(servie name) sice it is going to be the ip(used by docker) of the container. it is the container( with ip mysql sinec all services run on same network) that is running the MyQSL DB, not the local host(with ip 127.0.0.1)
+        DB_PORT=3306
+        DB_DATABASE=laravel_proj
+        DB_USERNAME=princewill
+        DB_PASSWORD=princewill1980
+
+
+=======================================================================
+Run the application
+=======================================================================
++ the server is main entrypoint which will serve the application and then forward request to php interpreter to process. the PHP interpreter will also talk to MyQSL DB

@@ -1,0 +1,39 @@
+version: "3" #This line specifies the version of the Docker Compose file format being used. In this case, it's version 3.
+services:   #This keyword indicates the start of the services section, where you define the different containers/services(like volumes and networks) for your application.
+  postgres:  #This block defines the configuration for the "postgres" service.
+    image: "postgres:latest" #It specifies that the container should use the "postgres:latest" image from Docker Hub
+    environment: #The environment section sets the value of the POSTGRES_PASSWORD environment variable to "postgres_password". This sets the password for the PostgreSQL database.
+      - POSTGRES_PASSWORD=postgres_password
+  nginx:  #This block defines the configuration for the "nginx" service.
+    depends_on:  # option specifies that this service depends on the "api" and "client" services. This ensures that the "api" and "client" containers are started before the "nginx" container.
+      - api
+      - client
+    restart: always #The restart option is set to "always", which means that the "nginx" container will always be restarted if it stops
+    build: #The build section specifies the build context and Dockerfile to use for building the "nginx" container. It points to a Dockerfile.dev file located in the "./nginx" directory.
+      dockerfile: Dockerfile.dev
+      context: ./nginx
+    ports: #The ports section maps port 3050 on the host to port 80 on the "nginx" container. This allows the "nginx" server running inside the container to be accessed at http://localhost:3050.
+      - "3050:80"
+  api: #This block defines the configuration for the "api" service.
+    build: #The build section specifies the build context and Dockerfile to use for building the "api" container. It points to a Dockerfile.dev file located in the "./server" directory.
+      dockerfile: Dockerfile.dev
+      context: "./server"
+    volumes: #The volumes section mounts two volumes inside the container: "/app/node_modules" and "./server:/app". This allows the container to use the node_modules directory from a previous build and also mounts the local "./server" directory to the "/app" directory inside the container.
+      - /app/node_modules
+      - ./server:/app
+    environment: #The environment section sets environment variables that are used by the API service, such as the PostgreSQL connection details.
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres_password
+      - PGPORT=5432
+  client: #This block defines the configuration for the "client" service.
+    stdin_open: true #The stdin_open option is set to true, which allows you to attach to the container's standard input. This is useful when running interactive processes.
+    environment: #The environment section sets environment variables specific to the client service. In this case, it sets the CHOKIDAR_USEPOLLING variable to true, which is a workaround for file watching in certain development environments.
+      - CHOKIDAR_USEPOLLING=true
+    build: #The build section specifies the build context and Dockerfile to use for building the "client" container. It points to a Dockerfile.dev file located in the "./client" directory.
+      dockerfile: Dockerfile.dev
+      context: ./client
+    volumes: #The volumes section mounts two volumes inside the container: "/app/node_modules" and "./client:/app". This allows the container to use the node_modules directory from a previous build and also mounts the local "./client" directory to the "/app" directory inside the container.
+      - /app/node_modules
+      - ./client:/app

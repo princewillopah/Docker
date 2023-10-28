@@ -1,0 +1,39 @@
+1 - create server folder and run "npm init"
+2 - in the package,json, have the following: {
+                                            "name": "server",
+                                            "version": "1.0.0",
+                                            "description": "",
+                                            "main": "index.js",
+                                            "author": "",
+                                            "license": "ISC",
+                                            "dependencies": {
+                                                "express": "^4.18.2",
+                                                "pg": "8.0.3",
+                                                "cors": "2.8.4",
+                                                "nodemon": "1.18.3",
+                                                "body-parser": "*"
+                                            },
+                                            "scripts": {
+                                                "dev": "nodemon",
+                                                "start": "node index.js"
+                                            }
+                                 }
+
+3 - 
+
+
+----- 
+to be unsed in kubernetes, push just the client and server images to docker hub
+
+docker login
+docker build -t princewillopah/k8s-node-react-postgres-nginx-client:v1 .
+docker push princewillopah/k8s-node-react-postgres-nginx-client:v1
+
+docker build -t princewillopah/k8s-node-react-postgres-nginx-server:v1 .
+docker push princewillopah/k8s-node-react-postgres-nginx-server:v1
+<!-- ----------------------------------- -->
+
+
+star on docker - https://gitlab.com/codeching/docker-multicontainer-application-react-nodejs-postgres-nginx-basic
+final on docker / starter on k8s - https://gitlab.com/codeching/docker-multicontainer-application-react-nodejs-postgres-nginx-basic/-/tree/master/
+final on k8s - https://gitlab.com/codeching/kubernetes-multicontainer-application-react-nodejs-postgres-nginx

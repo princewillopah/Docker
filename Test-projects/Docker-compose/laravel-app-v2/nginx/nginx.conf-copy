@@ -1,0 +1,20 @@
+server { #Declares the beginning of a server block that defines the configuration for a particular server.
+    listen 80;# Specifies that the server should listen on port 80 for incoming requests.
+    index index.php index.html; #  Specifies the default files to look for when a client requests the root of the server. In this case, it will first look for index.php, and if that's not found, it will look for index.html.
+    server_name 102.37.136.228; # Specifies the domain name that this server block applies to. In this case, it is the localhost domain.
+    root /var/www/html/public; # Specifies the root directory for the files that should be served by this server. In this case, it is the /var/www/html/public directory.
+    location / { #  Begins a new location block for requests to the root of the server.
+        try_files $uri $uri/ /index.php?$query_string; # Specifies a set of files to try when a client requests a resource. In this case, it will first look for the requested file, then a directory with the same name as the requested file, and finally it will pass the request to index.php with any query string parameters.
+    }
+    location ~ \.php$ { #  Begins a new location block for requests that end with .php.
+        try_files $uri =404; # Specifies that if the requested file doesn't exist, the server should return a 404 error.
+        fastcgi_split_path_info ^(.+\.php)(/.+)$; # Specifies how to split the request URI to pass to the FastCGI backend. This tells Nginx to take the entire URI and split it at the first occurrence of /.
+        fastcgi_pass php:9000; # Specifies the address and port of the FastCGI backend that will process the PHP code. In this case, it's running on the same Docker network and is named php.
+        fastcgi_index index.php; # Specifies the default file to look for when a client requests a directory. In this case, it is index.php.
+        include fastcgi_params; # Includes a set of default FastCGI parameters.
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; # Specifies the path to the PHP script that should be executed. $document_root is the root directory for the server block, and $fastcgi_script_name is the path to the PHP script that was requested.
+        fastcgi_param PATH_INFO $fastcgi_path_info; # Specifies the path information that should be passed to the FastCGI backend. $fastcgi_path_info is the part of the URI that comes after the script name.
+    }
+}
+
+

@@ -1,0 +1,14 @@
+{
+  "name": "node-utility-app",
+  "version": "v1",
+  "description": "to create node app package file mles and other dependencies for the app",
+  "main": "index.js",
+  "author": "princewill",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

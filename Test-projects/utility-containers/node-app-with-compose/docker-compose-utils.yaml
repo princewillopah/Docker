@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  # npm-util is the service name
+  npm-util:
+    # build command is to build the image and its going to look for a docker file "Dockerfile-utils" in this same directory "./" where the docker comose is
+    # build: ./
+    #the build key specifies the build context directory as the current directory (.) and the Dockerfile as  Dockerfile.utils in the root of the build context.
+    build:
+      context: /.
+      dockerfile: Dockerfile-utils
+    # 
+    container_name: node-utils
+    # this stdin_open: true and tty: true ensures that if the command needs our inputs, we will provide
+    stdin_open: true
+    tty: true
+    #creating a bind mount. unlike normal docker way, docker compose does not need asolute path. it works with relative path
+    volumes:
+      - ./:/app

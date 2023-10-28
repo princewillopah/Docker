@@ -1,0 +1,47 @@
+name: DevOops Way
+on:
+  push:
+    branches:
+    - master
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+
+    - uses: actions/checkout@v1
+    - name: Build Docker Image
+      uses: actions/docker/cli@master
+      with:
+        args: build -t docker.pkg.github.com/${{github.repository}}/cicd:latest .
+
+    - name: Dockle; Container Image Linter for Security, Helping build the Best-Practice Docker Image
+      uses: actions/checkout@v1
+    # Scan the image on host machine.
+    - run: |
+        VERSION=$(curl --silent "https://api.github.com/repos/goodwithtech/dockle/releases/latest" | \
+          grep '"tag_name":' | \
+          sed -E 's/.*"v([^"]+)".*/\1/' \
+        ) && docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+        -e DOCKLE_AUTH_URL=https://docker.pkg.github.com \
+        -e DOCKLE_USERNAME=${{github.actor}} \
+        -e DOCKLE_PASSWORD=${{secrets.token}} \
+        goodwithtech/dockle:v${VERSION} \
+        --exit-code 1 --exit-level fatal docker.pkg.github.com/${{github.repository}}/cicd:latest
+    - name: Login then Push to Docker Repository
+      uses: actions/docker/login@master
+      env:
+        DOCKER_USERNAME: ${{github.actor}}
+        DOCKER_PASSWORD: ${{secrets.token}}
+        DOCKER_REGISTRY_URL: docker.pkg.github.com
+      with:
+        args: push docker.pkg.github.com/${{github.repository}}/cicd:latest
+
+    - name: Pull from Docker Repository Then Run Docker Image
+      uses: daliborgogic/actions/ssh@master
+      env:
+        PRIVATE: ${{secrets.private_key}}
+        PUBLIC: ${{secrets.public_key}}
+        HOST: ${{secrets.host}}
+        USER: ${{secrets.user}}
+      with:
+        args: cd /usr/share/nginx/; . ./entrypoint.sh cicd ${{github.repository}}/cicd:latest 8080

@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  node-app:
+    build: 
+      context: .
+      args:
+        NODE_ENV: production
+    environment:
+    #to run on dev env
+      - NODE_ENV=production
+    #this wil overide the CMD ["node","server.js"] in the dockerfile
+    command: node server.js

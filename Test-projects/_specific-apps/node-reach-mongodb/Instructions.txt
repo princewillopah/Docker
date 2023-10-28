@@ -1,0 +1,56 @@
+=> This app is a nodejs react and mongoDB application -- MERN stack
+=> It compises 3 containers for node, reacj and mondo DB each. it is done without docker compose
+=> conditions:
+            => MongoDB
+                + Data must persist -- use volume
+                + Access should be limited -- use MongoDB container configuration
+            => Backend: Nodejs REST persist
+                + Data use persist -- use of volume
+                + live source code update -- use of bind mount
+            => Frontend: React SPA
+                + live source code update -- use of bind mount
+
+when a Frontend make request to the backend, the nodejs app make the request to the database. that is, it either stores or fetch records to/from the mongoDB and return the reult of the resuest to the Frontend
+that is the node interacct with both the fronend and database. both fronend and database has no direct interection 
+
+GETTING STARTED
+
+1. Create the network
+    ++ docker network create mern-network
+2. Create the mongoDB. run a docker container base on the official mongoDB and in the network "mern-network" created
+    ++ docker run --rm -d  --network mern-network --name mongoDB mongo
+3. Navigate into the backend folder and create a dockerile, then the commands to executes create the image. build the image
+    ++ docker build -t mern-backend .
+4. Run a container based on mern-backend image IN THE NETWOK created above
+    ++ docker run -d --rm -p 80:80 --network mern-network --name mern-backend mern-backend:latest
+    + do not foget to addrest the mongobd connection  string in node code with the mongodb container name since oth run on the same network. so change 'mongodb://localhost:27017/course-goals' to 'mongodb://mongoDB:27017/course-goals' if not rebuild, rebuild image and rerun container
+5. buld the frontend image by navigating to frontend folder and run build command. 
+    + before you build the image, make sure you have updated all the endpoint url to match the  backend container name since thats where both frontend container and backend container will communicate via the same network and fromeend is the one reaching out to frontend with its request, it has to reference the backend by the backend container name so docker will use the backend container name to resolve its ip address
+    ++ docker build -t mern-frontend .
+6. run the fronend container based on the image created above 
+    ++ docker run --rm -it -p 3000:3000 --network mern-network --name mern-frontend mern-frontend:latest
+    + run the reach app at localhost:3000 for locally or 102.37.136.228:3000 for volume
+    ++ error encounter that lead me to check for resource online and fix the error in package.jon start scrip and buld script
+    + after a sucessful run and website showed up, another issue arose, to load resource: net::ERR_NAME_NOT_RESOLVED
+    + one way i fixed this is to use the VM host to get the backend url http://<VM-IP>:80 that is 102.37.136.228:80. it worked but not efficient. the backend container name did not work here. according to the 
+
+7.  CREATE VOLUME
+    + Create a volume to persist data in your host machine so when the container is remove and recreated or another container is create and uses that volume, data will be persisted.
+    + Volumes are basically data storages that are outside of containers and exist on the host filesystem
+    + CREATE VOLUME FOR THE MongoDB AND ACCESS RESTRICTIONS
+        + -v /my/own/datadir:/data/db is  the command that mounts the /my/own/datadir directory from the underlying host system as /data/db inside the container, where MongoDB by default will write its data files.
+        + this, after creaing your own volume path "/my/own/datadir", you have to specify "/data/db" for the container's end as this is where mongodb stores the files in container
+        ++ docker run --rm -d  --network mern-network -v /my-volumes/mongoDb:/data/db --name mongoDB mongo
+        + mongo image also supports MONGO_INITDB_ROOT_USERNAME and MONGO_INITDB_ROOT_PASSWORD for creating a simple user with the role root in the admin authentication database, as described in the Environment Variables section above.
+        + This will help secure the mongodb so not any container will just aceess it. if any container(e.g. the node aoo) wants to connect to the mongo, it has to include the username and password in the connection string
+        ++ docker run --rm -d  --network mern-network -v /my-volumes/mongoDb:/data/db -e MONGO_INITDB_ROOT_USERNAME=princewillopah -e MONGO_INITDB_ROOT_PASSWORD=PRINCEWILL1980 --name mongoDB mongo
+       ++ docker run --rm -d  --network mern-network -v /my-volumes/mongoDb:/data/db -e MONGO_INITDB_ROOT_USERNAME=max -e MONGO_INITDB_ROOT_PASSWORD=secret --name mongoDB mongo
+    + CREATE VOLUME(for log files) AND BIND MOUNT(to be able to update code between host/container) FOR THE NODE APP 
+        + the standard way to connect to mongodb is mongodb://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]
+        + this is the basic connection string without authorization,: "mongodb://mongoDB:27017/course-goals" but we have added extra security layers, the connection string in node app becomes   mongodb://princewillopah:PRINCEWILL1980@mongoDB:27017/course-goals/?authSource=admin
+        ++ docker run -d --rm -p 80:80 --network mern-network -v /my-volumes/logs:/app/logs --name mern-backend mern-backend:latest
+
+
+    CREATE BIND MOUNT(to be able to update code between host/container) FOR THE REACT APP
+        + 
+        + 

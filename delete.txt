@@ -1,0 +1,64 @@
+server { 
+    listen 80;
+    index index.php index.html;
+    server_name localhost; 
+    root /var/www/html/public;  
+    location / { 
+        try_files $uri $uri/ /index.php?$query_string; 
+    }
+    location ~ \.php$ { 
+        try_files $uri =404; 
+        fastcgi_split_path_info ^(.+\.php)(/.+)$; 
+        fastcgi_pass php:9000; 
+        fastcgi_index index.php; 
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info; 
+    }
+}
+
+version: '3.8'
+services:
+  #this nginx server will listin on port 80 for incoming requests, forward them to the php interpreter to execute and ..
+  server:
+    #using nginx image from docker hub.
+    image: 'nginx:stable-alpine'
+    #nging, in it configuration file, requres that port 80 on container should be exposed and mapped to some port(in our case 8080) on host maching
+    ports:
+      - "8000:80"
+    # using bind mount to provide our own configuration file for nginx. the bindmount will bind the local file "nginx/nginx.conf" to the container file /etc/nginx/nginx.conf and make it read only so tthe cntainer does not mordify the content of the file
+    #note that "/etc/nginx/nginx.conf" is povidd by nginx. that is the path in  the container they will work with
+    # ./src:/var/www/html is also made availble so that the  
+    volumes:
+      - ./src:/var/www/html
+      - ./nginx/nginx.conf:/etc/nginx/con.d/default.conf:ro
+    # his means that this container/service depends on php service and php service depends on mysql serivce
+    depends_on:
+      - php
+      - mysql
+
+  php:
+    build: 
+      context: ./dockerfiles
+      dockerfile: php.dockerfile
+    # need need a bind mount. reason is because we have to ensure that this PHP interpreter can reach our source code and that source code need to be in the WORKDIR "/var/www/html" of the container.
+    # thus we need the source code folder in our local dir, and map it to the workdir of the container. ths we need a bind mound. we are going to creat a folder 'src' and mount to ""/var/www/html""
+    # we dont have to add the delegate. its just for performance. we may need the container to write frequently. so "ro" is not an option here. deleted will make sure the conainer write access should not be related instantly on our host for performance. 
+    volumes:
+      - ./src:/var/www/html:delegated
+
+  mysql:
+    image: mysql:5.7
+    env_file:
+      - ./env/mysql.env
+
+  #the composer container utility will help us set the laravel project first, the we may use it subsequently to install other laravel packages whenever we need it
+  composer-utils:
+    build:
+      context: ./dockerfiles
+      dockerfile: composer.dockerfile
+    volumes:
+      - ./src:/var/www/html:delegated
+  # artisan-utils:
+  # npm-utils:
+
