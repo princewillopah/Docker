@@ -30,5 +30,5 @@ coverage/
 # Ignore any local configuration files
 .local-*
 
-# Ignore any terraform configuration files
+# Ignore any terraform configuration files xxx 
 .terraform/
