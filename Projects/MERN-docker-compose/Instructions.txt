@@ -1,0 +1,67 @@
+===========================================================================================================================================================================
+Mongo db and backend
+===========================================================================================================================================================================
+navigate to the backend folder
+++ run mongo:
+            dk run  -d --rm --name todo-app-db mongo
+++ look for the mongodb container ip so you can use it in the mongodb connection string in the backend todo app
+++ do this by running "docker container inspect todo-app-db" and find the ip
+++ the mongodb-url = mongodb://172.17.0.2:27017/todo-app
+++ put the string in the backend container where the mongodb connection is required
+++ build backend dockerfile:
+           dk build -t todo-app-backend-img .
+++ run the container:
+        dk run -d --rm --name todo-app-backend todo-app-backend-img
+++ after confirmation that it works, delete both todo-app-db & todo-app-backend containers
+++ create a network(todo-app-network) and create the containers with this created network  -- note that we need to update the backend todo-app file with the todo-app-db(i.e mongodb://todo-app-db:27017/todo-app) name and rebuild the image
+                dk network create todo-app-network
+                dk run -d --rm --network todo-app-network --name todo-app-db mongo
+                dk build -t todo-app-backend-img .
+                dk run --rm --network todo-app-network --name todo-app-backend todo-app-backend-img
+         
+===========================================================================================================================================================================
+Frontend
+===========================================================================================================================================================================
+++ navigate to the frontend folder
+++ update the code endpoint to carry the backend container name(todo-app) i.e in the backend/src/App.js file, change all  http://BACKEND-URL:8000 to http://todo-app:8000
+++ create the dockerfile
+++ buld the frontend image: 
+                dk build -t todo-app-frontend-img .
+++ run the container:
+                dk run --rm  -it -p 3000:3000 -v $(pwd)/src:/app/src --network todo-app-network --name todo-app-frontend todo-app-frontend-img
+
+
+
+===========================================================================================================================================================================
+All Together
+===========================================================================================================================================================================
+Nextwork:
+        dk network create todo-app-network
+Run Mongo DB:
+        dk run -d --rm  -v data:/data/db --network todo-app-network --name todo-app-db mongo
+Build Backend Image:
+        dk build -t todo-app-backend-img .
+Run Backend:
+         dk run --rm -p 8000:8000 -v $(pwd)/src:/app/src --network todo-app-network --name todo-app-backend todo-app-backend-img
+Build Frontend Image:
+        dk build -t todo-app-frontend-img .
+Run Frontend:
+        dk run --rm  -it -p 3000:3000 -v $(pwd)/src:/app/src --network todo-app-network --name todo-app-frontend todo-app-frontend-img
+
+
+===========================================================================================================================================================================
+Connection issues between frontend and backend
+===========================================================================================================================================================================
+when we place both the frontend container(todo-app-backend) and the backend container( todo-app-frontend ) in the same network, and we expect the frontend to be able to connect
+ via  http://todo-app-backend:8000/todos, it will not work. t
+this is because the frontend code is not run in the container but it is run on the browser
+++ when we make a request from the browser, we make it to the container where we build the react server. The container then sends the response(html,js, cxx etc) to the browser
+++ the browser will then pass through the JS scripts an then render the html
+++ Thus, the HTML and JS that were passed to the browser by the container, will be run by the browser(not the container).
+	++ note that the browser(which is a different environment) does not know anything about the backend container. it is not path of the network to know what "todo-app-backend" in  http://todo-app-backend:8000/todos means. thus it will not render
+	++ to get this fixed, we will have to expose the port for the backend container, and have the host run the backend todo-app so the browser can reference it. 
+	++ instead of using http://todo-app-backend:8000/todos, we should use http://localhost:8000/todos (if the host is a local system) or http://234.34.56.145:8000/todos (if the host is a vm)
+	++ since http://localhost:8000/todos or http://234.34.56.145:8000/todos are valid endpoints that can be accessed by the browser, then the code will work.
+++ in this plays, the backend container ip can also work . i.e  http:172.17.0.3:8000/todos but it is not good if the ip are not static
+
+

@@ -1,0 +1,38 @@
+version: "3.8"
+services:
+  mongodb:
+    image: mongo
+    volumes:
+      - mongodb-data:/data/db
+    environment:
+      -  MONGO_INITDB_ROOT_USERNAME=mymongoadmin
+      -  MONGO_INITDB_ROOT_PASSWORD=mysecretpassword
+    container_name: todo-app-db
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend/src:/app/src
+    ports:
+      - 8000:8000
+    env_file:
+      - ./env/backend.env
+    depends_on:
+      - mongodb
+    container_name: backend
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend/src:/app/src
+    ports:
+      - 3000:3000
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+
+volumes:
+  mongodbdata:
