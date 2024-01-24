@@ -2,6 +2,7 @@
 node_modules/
 
 # Ignore log files and error reports
+# Ignore log files and error reports
 logs/
 *.log
 npm-debug.log*
